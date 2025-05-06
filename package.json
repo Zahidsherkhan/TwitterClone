@@ -22,6 +22,7 @@
     "mongoose": "^8.13.2"
   },
   "devDependencies": {
+    "daisyui": "^5.0.35",
     "nodemon": "^3.1.9"
   }
 }
