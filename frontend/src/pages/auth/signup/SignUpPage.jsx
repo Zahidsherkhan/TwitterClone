@@ -1,24 +1,57 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { IoLogoHackernews } from "react-icons/io";
 import { MdEmail, MdPerson, MdLock, MdAccountCircle } from "react-icons/md";
 import { Link } from "react-router-dom";
 
 const SignUpPage = () => {
-  const [formData, setformData] = useState({
+  const [formData, setFormData] = useState({
     email: "",
     username: "",
     fullName: "",
     password: "",
   });
-  const handleSumbit = (e) => {
+
+  const { mutate, isError, isPending } = useMutation({
+    mutationFn: async ({ email, username, fullName, password }) => {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, username, fullName, password }),
+      });
+
+      const data = await res.json();
+
+      // Throw an error if the response is not ok or contains an error
+      if (!res.ok || data.error) {
+        const errorMessage = data.error || "Something went wrong";
+        throw new Error(errorMessage);
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Signup successful!");
+      // You can redirect here, e.g., navigate("/login")
+    },
+    onError: (error) => {
+      toast.error(error.message || "Signup failed");
+      console.error("Signup error:", error.message);
+    },
+  });
+
+  const handleSubmit = (e) => {
     e.preventDefault();
     console.log(formData);
+    mutate(formData);
   };
+
   const handleInputChange = (e) => {
-    setformData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  const isError = false;
 
   return (
     <div>
@@ -27,7 +60,7 @@ const SignUpPage = () => {
           <IoLogoHackernews size={250} />
         </div>
         <div>
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="text-xl font-semibold mb-3">Join today.</div>
             <div className="flex flex-col gap-3">
               {/* Email */}
@@ -85,11 +118,10 @@ const SignUpPage = () => {
 
             {/* Signup Button */}
             <div className="bg-gradient-to-r from-red-200 via-red-300 to-red-500 border rounded-2xl text-center py-2 my-4 hover:brightness-110 transition-all duration-150">
-              <button onClick={handleSumbit}>Sign Up</button>
+              <button type="submit">
+                {isPending ? "Loading..." : "Sign Up"}
+              </button>
             </div>
-            {isError && (
-              <div className="text-red-600 text-xl">Something went wrong</div>
-            )}
 
             {/* Already have an account? */}
             <div className="text-center">Already have an account?</div>
@@ -97,7 +129,7 @@ const SignUpPage = () => {
             {/* Signin Button */}
             <Link to="/login">
               <div className="bg-gradient-to-r from-red-200 to-red-500 border rounded-2xl text-center py-2 my-2 hover:brightness-110 transition-all duration-150">
-                <button>Sign In</button>
+                <button type="button">Sign In</button>
               </div>
             </Link>
           </form>
