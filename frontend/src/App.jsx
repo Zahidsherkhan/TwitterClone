@@ -6,6 +6,7 @@ import MainLayout from "./components/MainLayout";
 import { Toaster } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
 import HomePage from "./pages/home/HomePage";
+import Profile from "./pages/Profile";
 
 const App = () => {
   const location = useLocation();
@@ -64,6 +65,11 @@ const App = () => {
         {/* Protected main layout route */}
         <Route
           path="*"
+          element={authUser ? <MainLayout /> : <Navigate to="/login" />}
+        />
+
+        <Route
+          path="/profile"
           element={authUser ? <MainLayout /> : <Navigate to="/login" />}
         />
       </Routes>

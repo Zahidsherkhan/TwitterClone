@@ -19,7 +19,7 @@ const FollowSuggestion = ({ name, handle, avatar }) => {
 
 const RightSideBar = () => {
   return (
-    <div className="bg-gradient-to-t from-red-300 via-red-400 to-red-500 rounded-xl px-3 py-4">
+    <div className="bg-gradient-to-t from-red-300 via-red-400 to-red-500 rounded-xl px-3 py-4 mr-20 mt-5 mb-5">
       <h4 className="text-[12px] font-semibold mb-2">Want to follow</h4>
 
       <FollowSuggestion name="Bugatata" handle="@buga" avatar="/avatar1.svg" />

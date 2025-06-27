@@ -56,7 +56,7 @@ const LeftSideBar = () => {
 
   return (
     <>
-      <div>
+      <div className="ml-20 mt-5">
         <div>
           <Link to="/">
             <div className="flex  gap-2 mb-6 mt-2 items-center ">

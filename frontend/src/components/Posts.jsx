@@ -1,38 +1,37 @@
-import React from "react";
+import React, { useState } from "react";
 import HomePage from "../pages/home/HomePage";
+import { useQuery } from "@tanstack/react-query";
 
 const Posts = () => {
-  return (
-    <div>
-      <HomePage />
-      <div>
-        <div>
-          <img
-            src="avatar1.svg"
-            className="w-10 h-10 border-0 rounded-full"
-            alt=""
-          />
-        </div>
-        <div className="flex justify-between">
-          <div className="flex flex-row gap-2">
-            <div>Jane Red</div>
-            <div>@janred</div>
-            <div>20h</div>
-          </div>
-          <div>
-            <button>Delete</button>
-          </div>
-        </div>
+  const [feedType, setFeedType] = useState("forYou");
 
-        <div className="flex justify-between">
-          <div>comment 0</div>
-          <div>Share 0</div>
-          <div>likes 2</div>
-          <div>Add to fav</div>
-        </div>
+  const endpoint =
+    feedType === "forYou" ? "/api/posts/all" : "/api/posts/following";
+
+  const {
+    data: posts = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["posts", feedType],
+    queryFn: async () => {
+      const res = await fetch(endpoint);
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Something went wrong");
+      return result; // Backend returns an array of posts
+    },
+  });
+
+  if (isLoading) return <div className="text-center mt-4">Loading...</div>;
+  if (error)
+    return (
+      <div className="text-red-500 text-center mt-4">
+        Error loading posts: {error.message}
       </div>
-      <button class="btn btn-primary">Button</button>
-    </div>
+    );
+
+  return (
+    <HomePage posts={posts} feedType={feedType} setFeedType={setFeedType} />
   );
 };
 
