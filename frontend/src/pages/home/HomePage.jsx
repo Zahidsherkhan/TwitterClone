@@ -1,14 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-const createPost = async (postText) => {
+const convertToBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+
+const createPost = async ({ text, img }) => {
   const response = await fetch("/api/posts/create", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ text: postText }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, img }),
   });
 
   if (!response.ok) {
@@ -32,6 +38,9 @@ const deletePost = async (postId) => {
 
 const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
   const [postText, setPostText] = useState("");
+  const [img, setImg] = useState(null);
+  const [imgPreview, setImgPreview] = useState(null);
+  const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
   const { data: authUser } = useQuery({
@@ -48,6 +57,9 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
     onSuccess: () => {
       toast.success("Post created successfully!");
       setPostText("");
+      setImg(null);
+      setImgPreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       queryClient.invalidateQueries(["posts"]);
     },
     onError: (error) => toast.error(error.message),
@@ -62,25 +74,42 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
     onError: (error) => toast.error(error.message),
   });
 
-  const handleCreatePost = () => {
-    if (postText.trim() !== "") {
-      mutation.mutate(postText);
+  const handleCreatePost = async () => {
+    if (postText.trim() === "" && !img) {
+      toast.error("Please enter text or select an image.");
+      return;
     }
+
+    let base64Img = null;
+    if (img) {
+      base64Img = await convertToBase64(img);
+    }
+
+    mutation.mutate({ text: postText, img: base64Img });
   };
 
   const handleEnterKey = (e) => {
-    if (e.key === "Enter") {
-      handleCreatePost();
-    }
+    if (e.key === "Enter") handleCreatePost();
   };
 
   const handleDeletePost = async (postId) => {
-    deleteMutation.mutate(postId);
+    if (window.confirm("Are you sure you want to delete this post?")) {
+      deleteMutation.mutate(postId);
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImg(file);
+      setImgPreview(URL.createObjectURL(file));
+    }
   };
 
   return (
     <div className="flex h-screen">
       <div className="flex-1 max-w-xl mx-auto w-full border-l border-r overflow-y-auto max-h-screen scroll-hidden">
+        {/* Feed Switch Buttons */}
         <div className="flex justify-around border-b py-2 sticky top-0 z-10 bg-red-200">
           <button
             onClick={() => setFeedType("forYou")}
@@ -104,12 +133,12 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
           </button>
         </div>
 
+        {/* Post Input */}
         <div className="flex items-start gap-2 px-4 py-3 border-b">
           <img src="vite.svg" className="w-10 h-10 rounded-full" alt="avatar" />
           <div className="flex-1">
             <div className="text-gray-600">What is happening?</div>
             <input
-              name="postText"
               value={postText}
               onChange={(e) => setPostText(e.target.value)}
               onKeyDown={handleEnterKey}
@@ -117,7 +146,25 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
               type="text"
               placeholder="Write something..."
             />
-            <input type="file" className="mt-2 text-sm" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="mt-2 text-sm"
+              onChange={handleImageChange}
+            />
+
+            {/* Image Preview */}
+            {imgPreview && (
+              <div className="mt-2">
+                <img
+                  src={imgPreview}
+                  alt="Preview"
+                  className="max-w-full rounded-md"
+                />
+              </div>
+            )}
+
             <div>
               <button
                 className="bg-gradient-to-r from-red-200 via-red-300 to-red-400 p-2 text-[10px] mt-2 font-semibold cursor-pointer rounded-lg hover:from-red-400 hover:via-red-500"
@@ -129,6 +176,7 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
           </div>
         </div>
 
+        {/* Posts */}
         {posts.length === 0 ? (
           <p className="text-center text-gray-500 my-4">No posts to show.</p>
         ) : (
