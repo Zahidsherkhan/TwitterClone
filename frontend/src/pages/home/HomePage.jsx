@@ -7,7 +7,7 @@ import { MdOutlineDelete } from "react-icons/md";
 import { ImSpinner8 } from "react-icons/im";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-// Converts image to base64 string
+// Convert image to base64 string
 const convertToBase64 = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -40,12 +40,15 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
   const [postText, setPostText] = useState("");
   const [img, setImg] = useState(null);
   const [imgPreview, setImgPreview] = useState(null);
-  const [commnetModal, setcommnetModal] = useState(false);
   const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
-  const handleModal = () => setcommnetModal(true);
+  const [activeSharePostId, setActiveSharePostId] = useState(null);
+  const [activeCommentPostId, setActiveCommentPostId] = useState(null);
 
+  const [likeLoadingPostId, setLikeLoadingPostId] = useState(null);
+
+  // Auth user fetch
   const { data: authUser } = useQuery({
     queryKey: ["authUser"],
     queryFn: async () => {
@@ -55,6 +58,7 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
     },
   });
 
+  // Create post
   const mutation = useMutation({
     mutationFn: createPost,
     onSuccess: () => {
@@ -68,6 +72,7 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
     onError: (error) => toast.error(error.message),
   });
 
+  // Delete post
   const deleteMutation = useMutation({
     mutationFn: deletePost,
     onSuccess: () => {
@@ -75,6 +80,27 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
       queryClient.invalidateQueries(["posts"]);
     },
     onError: (error) => toast.error(error.message),
+  });
+
+  // Like/Unlike post
+  const { mutate: likeUnlikeMutate } = useMutation({
+    mutationFn: async (postId) => {
+      const res = await fetch(`/api/posts/like/${postId}`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to like/unlike");
+      return res.json();
+    },
+    onMutate: (postId) => {
+      setLikeLoadingPostId(postId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["posts"]); // refetch updated posts
+    },
+    onError: (error) => {
+      toast.error(error.message || "Something went wrong");
+    },
+    onSettled: () => {
+      setLikeLoadingPostId(null);
+    },
   });
 
   const handleCreatePost = async () => {
@@ -85,7 +111,6 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
 
     let base64Img = null;
     if (img) base64Img = await convertToBase64(img);
-
     mutation.mutate({ text: postText, img: base64Img });
   };
 
@@ -107,16 +132,29 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
     }
   };
 
+  const handleLike = (postId) => {
+    // toast.success(likedPosts[postId] ? "Post unliked" : "Post liked");
+    likeUnlikeMutate(postId);
+  };
+
+  const handleCommentModal = (postId) => {
+    setActiveCommentPostId(postId);
+  };
+
+  const handleShareModal = (postId) => {
+    setActiveSharePostId(postId);
+  };
+
   return (
     <>
-      {/* Modal */}
-      {commnetModal && (
-        <div className="fixed inset-0  bg-opacity-50 z-50 flex items-center justify-center">
+      {/* Comment Modal */}
+      {activeCommentPostId && (
+        <div className="fixed inset-0 bg-opacity-50  z-50 flex items-center justify-center">
           <div className="bg-white p-4 rounded-md shadow-md w-96">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-lg font-semibold">What do you think?</h2>
               <button
-                onClick={() => setcommnetModal(false)}
+                onClick={() => setActiveCommentPostId(null)}
                 className="text-red-500 text-lg cursor-pointer hover:bg-red-300 px-3 rounded-2xl"
               >
                 X
@@ -130,6 +168,43 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
             <button className="bg-red-500 mt-3 text-white px-4 py-1 rounded hover:bg-red-600 text-sm cursor-pointer">
               Submit
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {activeSharePostId && (
+        <div className="fixed inset-0  bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white p-4 rounded-md shadow-md w-80">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-lg font-semibold">Share this post</h2>
+              <button
+                onClick={() => setActiveSharePostId(null)}
+                className="text-red-500 text-lg cursor-pointer hover:bg-red-300 px-3 rounded-2xl"
+              >
+                X
+              </button>
+            </div>
+            <div className="text-sm text-gray-700">
+              <p>Copy the link to share this post:</p>
+              <input
+                type="text"
+                value={`https://yourapp.com/post/${activeSharePostId}`}
+                readOnly
+                className="w-full border rounded p-1 mt-2 text-xs"
+              />
+              <button
+                className="bg-red-500 text-white text-sm px-3 py-1 mt-2 rounded hover:bg-red-600"
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    `https://yourapp.com/post/${activeSharePostId}`
+                  );
+                  alert("Link copied!");
+                }}
+              >
+                Copy Link
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -213,67 +288,82 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
           {posts.length === 0 ? (
             <p className="text-center text-gray-500 my-4">No posts to show.</p>
           ) : (
-            posts.map((post) => (
-              <div key={post._id} className="border-b py-4 px-4">
-                <div className="flex items-start gap-3 mb-2">
-                  <img
-                    src="vite.svg"
-                    className="w-10 h-10 rounded-full"
-                    alt="avatar"
-                  />
-                  <div className="flex flex-col w-full">
-                    <div className="flex items-center justify-between w-full">
-                      <span className="font-bold">
-                        {post.user?.username || post.user?.name || "Unknown"}
-                      </span>
-                      {authUser?._id === post.user?._id && (
-                        <div>
-                          <button
-                            onClick={() => handleDeletePost(post._id)}
-                            className="text-red-500 hover:underline hover:bg-red-400 hover:text-gray-700 px-3 cursor-pointer rounded-2xl"
-                          >
-                            {deleteMutation.isPending ? (
-                              <ImSpinner8 className="animate-spin" />
-                            ) : (
-                              <MdOutlineDelete size={18} />
-                            )}
-                          </button>
-                        </div>
+            posts.map((post) => {
+              const isLikedByMe = post.likes.includes(authUser?._id);
+
+              return (
+                <div key={post._id} className="border-b py-4 px-4">
+                  <div className="flex items-start gap-3 mb-2">
+                    <img
+                      src="vite.svg"
+                      className="w-10 h-10 rounded-full"
+                      alt="avatar"
+                    />
+                    <div className="flex flex-col w-full">
+                      <div className="flex items-center justify-between w-full">
+                        <span className="font-bold">
+                          {post.user?.username || post.user?.name || "Unknown"}
+                        </span>
+                        {authUser?._id === post.user?._id && (
+                          <div>
+                            <button
+                              onClick={() => handleDeletePost(post._id)}
+                              className="text-red-500 hover:underline hover:bg-red-400 hover:text-gray-700 px-3 cursor-pointer rounded-2xl"
+                            >
+                              {deleteMutation.isPending ? (
+                                <ImSpinner8 className="animate-spin" />
+                              ) : (
+                                <MdOutlineDelete size={18} />
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-gray-700 text-sm mt-1">
+                        {post.text}
+                      </div>
+                    </div>
+                  </div>
+
+                  {post.img && (
+                    <img
+                      src={post.img}
+                      alt="post"
+                      className="w-full rounded-md mb-2"
+                    />
+                  )}
+
+                  <div className="flex justify-around text-sm text-gray-600 w-full">
+                    <div
+                      className="cursor-pointer hover:bg-red-400 px-3 rounded-2xl"
+                      onClick={() => handleCommentModal(post._id)}
+                    >
+                      <FaRegComment />
+                    </div>
+                    <div
+                      className="cursor-pointer hover:bg-red-400 px-3 rounded-2xl"
+                      onClick={() => handleShareModal(post._id)}
+                    >
+                      <FaRegShareSquare />
+                    </div>
+                    <div
+                      className="cursor-pointer hover:bg-red-400 px-3 rounded-2xl"
+                      onClick={() => handleLike(post._id)}
+                    >
+                      {likeLoadingPostId === post._id ? (
+                        <ImSpinner8 className="animate-spin text-red-500" />
+                      ) : (
+                        <AiOutlineLike color={isLikedByMe ? "red" : "black"} />
                       )}
                     </div>
-                    <div className="text-gray-700 text-sm mt-1">
-                      {post.text}
+
+                    <div className="cursor-pointer hover:bg-red-400 px-3 rounded-2xl">
+                      <CiBookmark />
                     </div>
                   </div>
                 </div>
-
-                {post.img && (
-                  <img
-                    src={post.img}
-                    alt="post"
-                    className="w-full rounded-md mb-2"
-                  />
-                )}
-
-                <div className="flex justify-around text-sm text-gray-600 w-full">
-                  <div
-                    className="cursor-pointer hover:bg-red-400 px-3 rounded-2xl"
-                    onClick={handleModal}
-                  >
-                    <FaRegComment />
-                  </div>
-                  <div className="cursor-pointer hover:bg-red-400 px-3 rounded-2xl">
-                    <FaRegShareSquare />
-                  </div>
-                  <div className="cursor-pointer hover:bg-red-400 px-3 rounded-2xl">
-                    <AiOutlineLike color="black" />
-                  </div>
-                  <div className="cursor-pointer hover:bg-red-400 px-3 rounded-2xl">
-                    <CiBookmark color="black" />
-                  </div>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

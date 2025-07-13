@@ -104,6 +104,9 @@ export const likeUnlikePost = async (req, res) => {
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({ error: "Invalid post ID" });
+    }
 
     const alreadyLiked = post.likes.includes(userId);
 
@@ -144,6 +147,8 @@ export const likeUnlikePost = async (req, res) => {
 // Get all Posts
 export const getAllPosts = async (req, res) => {
   try {
+    const currentUserId = req.user._id;
+
     const posts = await Post.find()
       .sort({ createdAt: -1 })
       .populate({
@@ -153,9 +158,17 @@ export const getAllPosts = async (req, res) => {
       .populate({
         path: "comments.user",
         select: "-password",
-      });
+      })
+      .lean(); // IMPORTANT: makes posts plain JS objects so we can modify them easily
 
-    res.status(200).json(posts);
+    const updatedPosts = posts.map((post) => ({
+      ...post,
+      isLikedByMe: post.likes.some(
+        (id) => id.toString() === currentUserId.toString()
+      ),
+    }));
+
+    res.status(200).json(updatedPosts);
   } catch (error) {
     console.error("Error in getAllPosts:", error.message);
     res.status(500).json({ error: "Internal server error" });
