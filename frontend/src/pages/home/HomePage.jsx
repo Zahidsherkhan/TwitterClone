@@ -6,6 +6,9 @@ import { CiBookmark } from "react-icons/ci";
 import { MdOutlineDelete } from "react-icons/md";
 import { ImSpinner8 } from "react-icons/im";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatPostDate } from "../../../util/date";
+
+// const formattedDate = formatPostDate(post.createdAt);
 
 // Convert image to base64 string
 const convertToBase64 = (file) =>
@@ -36,6 +39,179 @@ const deletePost = async (postId) => {
   return response.json();
 };
 
+/* ---------- CommentModal ----------------------------------------- */
+const CommentModal = ({
+  post,
+  isOpen,
+  onClose,
+  onCommentSubmit,
+  isSubmitting,
+}) => {
+  const [commentText, setCommentText] = useState("");
+
+  const handleSubmit = () => {
+    if (!commentText.trim()) return;
+    onCommentSubmit(post._id, commentText);
+    setCommentText("");
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center transition-opacity duration-300 ease-in-out">
+      <div className="bg-white p-5 rounded-xl w-full max-w-md shadow-2xl animate-fadeIn">
+        <div className="flex justify-between items-center border-b pb-2 mb-3">
+          <h2 className="text-lg font-bold text-red-500">Comments</h2>
+          <button
+            onClick={onClose}
+            className="text-red-500 hover:text-red-700 font-bold text-lg"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="max-h-60 overflow-y-auto space-y-3 mb-3">
+          {post.comments.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center">
+              No comments yet.
+            </p>
+          ) : (
+            post.comments.map((c) => (
+              <div key={c._id} className="bg-gray-100 rounded p-2 text-sm">
+                <strong className="text-gray-700">
+                  {c.user?.username || "User"}:
+                </strong>{" "}
+                {c.text}
+              </div>
+            ))
+          )}
+        </div>
+
+        <textarea
+          rows={2}
+          value={commentText}
+          onChange={(e) => setCommentText(e.target.value)}
+          placeholder="Write a comment..."
+          className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:ring-1 focus:ring-red-400"
+        />
+
+        <button
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="bg-red-500 w-full mt-3 text-white py-2 rounded hover:bg-red-600 text-sm transition-colors"
+        >
+          {isSubmitting ? (
+            <ImSpinner8 className="animate-spin mx-auto" />
+          ) : (
+            "Post Comment"
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+/* ---------- PostCard --------------------------------------------- */
+const PostCard = ({
+  post,
+  authUserId,
+  onCommentSubmit,
+  onDelete,
+  onLike,
+  likeLoadingId,
+  onShare,
+}) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (postId, text) => {
+    setIsSubmitting(true);
+    await onCommentSubmit(postId, text); // call the handler from HomePage
+    setIsSubmitting(false);
+    setIsModalOpen(false); //auto close modal
+  };
+
+  const isLikedByMe = post.likes.includes(authUserId);
+
+  return (
+    <div className="border-b px-4 py-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h3 className="font-bold">{post.user?.fullName || "Unknown"}</h3>
+          <p className="text-gray-600 text-[10px]">
+            @{post.user?.username || "Unknown"}
+          </p>
+
+          <p className="text-gray-600 text-[10px]">
+            {formatPostDate(post.createdAt)}
+          </p>
+        </div>
+
+        {authUserId === post.user?._id && (
+          <button onClick={() => onDelete(post._id)} className="text-red-500">
+            Delete
+          </button>
+        )}
+      </div>
+
+      <p className="text-sm text-gray-700 mt-1">{post.text}</p>
+      {post.img && (
+        <img src={post.img} alt="" className="w-full mt-2 rounded-md" />
+      )}
+
+      {/* actions */}
+      <div className="flex gap-6 mt-2 text-sm text-gray-600 items-center">
+        {/* comment */}
+        <div
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-1 cursor-pointer group"
+        >
+          <FaRegComment className="w-4 h-4 text-red-500 group-hover:text-red-400" />
+          <span className="text-red-500 group-hover:text-red-400">
+            {post.comments.length}
+          </span>
+        </div>
+
+        {/* like */}
+        <button
+          onClick={() => onLike(post._id)}
+          className="flex items-center gap-1"
+        >
+          {likeLoadingId === post._id ? (
+            <ImSpinner8 className="animate-spin text-red-500 w-4 h-4" />
+          ) : (
+            <AiOutlineLike
+              className="w-4 h-4"
+              color={isLikedByMe ? "red" : "black"}
+            />
+          )}
+          <span className="text-red-500">{post.likes.length}</span>
+        </button>
+
+        {/* share */}
+        <div
+          onClick={() => onShare(post._id)}
+          className="flex items-center gap-1 cursor-pointer group"
+        >
+          <FaRegShareSquare className="w-4 h-4 text-red-500 group-hover:text-red-400" />
+        </div>
+      </div>
+
+      {/* modal */}
+      <CommentModal
+        post={post}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onCommentSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+      />
+    </div>
+  );
+};
+/* ------------------------------------------------------------------ */
+/* END helper components                                              */
+/* ------------------------------------------------------------------ */
+
 const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
   const [postText, setPostText] = useState("");
   const [img, setImg] = useState(null);
@@ -44,7 +220,6 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
   const queryClient = useQueryClient();
 
   const [activeSharePostId, setActiveSharePostId] = useState(null);
-  const [activeCommentPostId, setActiveCommentPostId] = useState(null);
 
   const [likeLoadingPostId, setLikeLoadingPostId] = useState(null);
 
@@ -103,6 +278,34 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
     },
   });
 
+  // Comment Mutation
+  const { mutate: commentMutate } = useMutation({
+    mutationFn: async ({ postId, comment }) => {
+      const res = await fetch(`/api/posts/comment/${postId}`, {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({ text: comment }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong");
+      }
+      return data;
+    },
+
+    onSuccess: (_, variables) => {
+      toast.success("Comment posted");
+      queryClient.invalidateQueries(["comments", variables.postId]);
+    },
+
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const handleCreatePost = async () => {
     if (postText.trim() === "" && !img) {
       toast.error("Please enter text or select an image.");
@@ -137,41 +340,12 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
     likeUnlikeMutate(postId);
   };
 
-  const handleCommentModal = (postId) => {
-    setActiveCommentPostId(postId);
-  };
-
   const handleShareModal = (postId) => {
     setActiveSharePostId(postId);
   };
 
   return (
     <>
-      {/* Comment Modal */}
-      {activeCommentPostId && (
-        <div className="fixed inset-0 bg-opacity-50  z-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-md shadow-md w-96">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-lg font-semibold">What do you think?</h2>
-              <button
-                onClick={() => setActiveCommentPostId(null)}
-                className="text-red-500 text-lg cursor-pointer hover:bg-red-300 px-3 rounded-2xl"
-              >
-                X
-              </button>
-            </div>
-            <textarea
-              placeholder="Write your comment..."
-              className="w-full border rounded p-2 text-sm"
-              rows={3}
-            />
-            <button className="bg-red-500 mt-3 text-white px-4 py-1 rounded hover:bg-red-600 text-sm cursor-pointer">
-              Submit
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Share Modal */}
       {activeSharePostId && (
         <div className="fixed inset-0  bg-opacity-50 z-50 flex items-center justify-center">
@@ -208,7 +382,6 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
           </div>
         </div>
       )}
-
       {/* Main Layout */}
       <div className="flex h-screen">
         <div className="flex-1 max-w-xl mx-auto w-full border-l border-r overflow-y-auto max-h-screen scroll-hidden">
@@ -288,85 +461,38 @@ const HomePage = ({ posts = [], feedType, setFeedType = () => {} }) => {
           {posts.length === 0 ? (
             <p className="text-center text-gray-500 my-4">No posts to show.</p>
           ) : (
-            posts.map((post) => {
-              const isLikedByMe = post.likes.includes(authUser?._id);
+            posts.map((post) => (
+              <PostCard
+                key={post._id}
+                post={post}
+                authUserId={authUser?._id}
+                likeLoadingId={likeLoadingPostId}
+                onLike={handleLike}
+                onShare={handleShareModal}
+                onDelete={handleDeletePost}
+                onCommentSubmit={async (postId, commentText) => {
+                  try {
+                    await commentMutate({ postId, comment: commentText });
 
-              return (
-                <div key={post._id} className="border-b py-4 px-4">
-                  <div className="flex items-start gap-3 mb-2">
-                    <img
-                      src="vite.svg"
-                      className="w-10 h-10 rounded-full"
-                      alt="avatar"
-                    />
-                    <div className="flex flex-col w-full">
-                      <div className="flex items-center justify-between w-full">
-                        <span className="font-bold">
-                          {post.user?.username || post.user?.name || "Unknown"}
-                        </span>
-                        {authUser?._id === post.user?._id && (
-                          <div>
-                            <button
-                              onClick={() => handleDeletePost(post._id)}
-                              className="text-red-500 hover:underline hover:bg-red-400 hover:text-gray-700 px-3 cursor-pointer rounded-2xl"
-                            >
-                              {deleteMutation.isPending ? (
-                                <ImSpinner8 className="animate-spin" />
-                              ) : (
-                                <MdOutlineDelete size={18} />
-                              )}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-gray-700 text-sm mt-1">
-                        {post.text}
-                      </div>
-                    </div>
-                  </div>
-
-                  {post.img && (
-                    <img
-                      src={post.img}
-                      alt="post"
-                      className="w-full rounded-md mb-2"
-                    />
-                  )}
-
-                  <div className="flex justify-around text-sm text-gray-600 w-full">
-                    <div
-                      className="cursor-pointer hover:bg-red-400 px-3 rounded-2xl"
-                      onClick={() => handleCommentModal(post._id)}
-                    >
-                      <FaRegComment />
-                    </div>
-                    <div
-                      className="cursor-pointer hover:bg-red-400 px-3 rounded-2xl"
-                      onClick={() => handleShareModal(post._id)}
-                    >
-                      <FaRegShareSquare />
-                    </div>
-                    <div
-                      className="cursor-pointer hover:bg-red-400 px-3 rounded-2xl"
-                      onClick={() => handleLike(post._id)}
-                    >
-                      {likeLoadingPostId === post._id ? (
-                        <ImSpinner8 className="animate-spin text-red-500" />
-                      ) : (
-                        <AiOutlineLike color={isLikedByMe ? "red" : "black"} />
-                      )}
-                    </div>
-
-                    <div className="cursor-pointer hover:bg-red-400 px-3 rounded-2xl">
-                      <CiBookmark />
-                    </div>
-                  </div>
-                </div>
-              );
-            })
+                    const postToUpdate = posts.find((p) => p._id === postId);
+                    if (postToUpdate) {
+                      postToUpdate.comments.push({
+                        text: commentText,
+                        user: { username: authUser?.username || "You" },
+                        _id: Math.random().toString(36),
+                      });
+                    }
+                  } catch (err) {
+                    // error is already handled in mutation
+                  }
+                }}
+              />
+            ))
           )}
-        </div>
-      </div>
+        </div>{" "}
+        {/* End of .flex-1 container */}
+      </div>{" "}
+      {/* End of main flex container */}
     </>
   );
 };
