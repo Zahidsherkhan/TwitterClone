@@ -66,8 +66,6 @@ export const deletePost = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-// Comment on Post
 export const commentOnPost = async (req, res) => {
   try {
     const { text } = req.body;
@@ -78,7 +76,7 @@ export const commentOnPost = async (req, res) => {
       return res.status(400).json({ error: "Please provide text" });
     }
 
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId).populate("user");
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
@@ -86,6 +84,16 @@ export const commentOnPost = async (req, res) => {
     const comment = { user: userId, text };
     post.comments.push(comment);
     await post.save();
+
+    // Create notification for post owner (if commenter is not the owner)
+    if (userId.toString() !== post.user._id.toString()) {
+      await Notification.create({
+        type: "comment",
+        from: userId,
+        to: post.user._id,
+        post: post._id,
+      });
+    }
 
     res.status(200).json(post);
   } catch (error) {
@@ -159,7 +167,7 @@ export const getAllPosts = async (req, res) => {
         path: "comments.user",
         select: "-password",
       })
-      .lean(); // IMPORTANT: makes posts plain JS objects so we can modify them easily
+      .lean();
 
     const updatedPosts = posts.map((post) => ({
       ...post,

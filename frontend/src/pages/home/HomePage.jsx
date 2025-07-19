@@ -58,8 +58,8 @@ const CommentModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center transition-opacity duration-300 ease-in-out">
-      <div className="bg-white p-5 rounded-xl w-full max-w-md shadow-2xl animate-fadeIn">
+    <div className="fixed inset-0  bg-black/30 z-50 flex items-center justify-center transition-opacity duration-300 ease-in-out">
+      <div className="bg-white p-5  rounded-xl w-full max-w-md shadow-2xl animate-fadeIn">
         <div className="flex justify-between items-center border-b pb-2 mb-3">
           <h2 className="text-lg font-bold text-red-500">Comments</h2>
           <button
@@ -148,7 +148,10 @@ const PostCard = ({
         </div>
 
         {authUserId === post.user?._id && (
-          <button onClick={() => onDelete(post._id)} className="text-red-500">
+          <button
+            onClick={() => onDelete(post._id)}
+            className="text-red-500 cursor-pointer hover:text-red-600"
+          >
             Delete
           </button>
         )}
@@ -181,7 +184,7 @@ const PostCard = ({
             <ImSpinner8 className="animate-spin text-red-500 w-4 h-4" />
           ) : (
             <AiOutlineLike
-              className="w-4 h-4"
+              className="w-4 h-4 hover:fill-red-700 cursor-pointer"
               color={isLikedByMe ? "red" : "black"}
             />
           )}

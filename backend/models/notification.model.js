@@ -15,7 +15,11 @@ const notificationSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["follow", "like"],
+      enum: ["follow", "like", "comment"],
+    },
+    post: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
     },
     read: {
       type: Boolean,
@@ -23,7 +27,7 @@ const notificationSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // also fix typo: was `timestamp`
+    timestamps: true,
   }
 );
 
