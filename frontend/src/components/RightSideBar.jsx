@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import useFollow from "../Hooks/useFollow";
+import { Link } from "react-router-dom";
 
 // FollowSuggestion receives props from RightSideBar
 const FollowSuggestion = ({
@@ -12,14 +13,16 @@ const FollowSuggestion = ({
 }) => {
   return (
     <div className="flex justify-between items-center mb-3 gap-3 ">
-      <div className="flex items-center  gap-2">
+      <Link
+        to={`/profile/${username.replace("@", "")}`}
+        className="flex items-center gap-2"
+      >
         <img src={avatar} alt={name} className="w-6 h-6 rounded-full" />
-        <div className="flex flex-col ">
+        <div className="flex flex-col">
           <span className="text-[12px]">{name}</span>
           <span className="text-gray-600 text-[10px]">{username}</span>
         </div>
-      </div>
-
+      </Link>
       <button
         disabled={isPending}
         onClick={onFollowClick}

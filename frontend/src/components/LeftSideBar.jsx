@@ -63,12 +63,14 @@ const LeftSideBar = () => {
           </div>
         </Link>
 
-        <Link to="/updateprofile">
-          <div className="flex gap-2 items-center hover:bg-red-300 duration-150 px-2 rounded-2xl">
-            <MdAccountCircle />
-            <div>Profile</div>
-          </div>
-        </Link>
+        {authData?.username && (
+          <Link to={`/profile/${authData.username}`}>
+            <div className="flex gap-2 items-center hover:bg-red-300 duration-150 px-2 rounded-2xl">
+              <MdAccountCircle />
+              <div>Profile</div>
+            </div>
+          </Link>
+        )}
       </div>
 
       {/* Logout & Profile Section */}

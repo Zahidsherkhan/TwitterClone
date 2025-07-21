@@ -7,8 +7,6 @@ import Posts from "./Posts";
 import Likes from "./Likes";
 import CreatePost from "./CreatePost";
 import Notifications from "../pages/Notifications";
-import UpdateProfile from "../pages/profile/UpdateProfile";
-import toast from "react-hot-toast"; // Import toast
 import Profile from "../pages/Profile";
 
 const MainLayout = () => {
@@ -18,13 +16,11 @@ const MainLayout = () => {
       <div className="flex-1">
         <Routes>
           <Route path="/" element={<Posts />} />
-          <Route path="/posts" element={<Posts />} />
-
-          <Route path="/likes" element={<Likes />} />
-          <Route path="/createpost" element={<CreatePost />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/updateprofile" element={<UpdateProfile />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="posts" element={<Posts />} />
+          <Route path="likes" element={<Likes />} />
+          <Route path="createpost" element={<CreatePost />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="profile/:username" element={<Profile />} />
         </Routes>
       </div>
       <RightSideBar />

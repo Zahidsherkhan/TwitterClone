@@ -67,11 +67,6 @@ const App = () => {
           path="*"
           element={authUser ? <MainLayout /> : <Navigate to="/login" />}
         />
-
-        <Route
-          path="/profile"
-          element={authUser ? <MainLayout /> : <Navigate to="/login" />}
-        />
       </Routes>
     </>
   );
