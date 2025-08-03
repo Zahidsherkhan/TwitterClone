@@ -56,7 +56,7 @@ const LoginPage = () => {
 
   return (
     <div>
-      <div className="flex justify-center h-screen gap-16 items-center">
+      <div className="flex flex-col sm:flex-row gap-6 justify-center h-screen sm:gap-16 items-center">
         {/* Logo */}
         <div className="text-red-400">
           <IoLogoHackernews size={250} />

@@ -2,8 +2,9 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import useFollow from "../Hooks/useFollow";
 import { Link } from "react-router-dom";
+import { useAuthUser } from "../Hooks/useAuthUser";
 
-// FollowSuggestion receives props from RightSideBar
+// Reusable follow suggestion card
 const FollowSuggestion = ({
   name,
   username,
@@ -12,7 +13,7 @@ const FollowSuggestion = ({
   isPending,
 }) => {
   return (
-    <div className="flex justify-between items-center mb-3 gap-3 ">
+    <div className="flex justify-between items-center mb-3 gap-3">
       <Link
         to={`/profile/${username.replace("@", "")}`}
         className="flex items-center gap-2"
@@ -34,7 +35,10 @@ const FollowSuggestion = ({
   );
 };
 
+// Main RightSideBar
 const RightSideBar = () => {
+  const authUser = useAuthUser();
+
   const {
     data: suggestedUsers = [],
     isLoading,
@@ -53,14 +57,24 @@ const RightSideBar = () => {
   const { followMutation, isPending } = useFollow();
 
   return (
-    <div className="ml-6 bg-gradient-to-t from-red-300 via-red-400 to-red-500 rounded-xl px-3 py-4 mr-20 mt-5 mb-5">
-      <h4 className="text-[12px] font-semibold mb-2">Want to follow</h4>
+    <div className="ml-21 bg-gradient-to-t from-red-300 via-red-400 to-red-500 rounded-xl px-3 py-4 mr-20 mt-5 mb-8">
+      <h4 className="text-[12px] font-semibold mb-2 text-white">
+        Want to follow
+      </h4>
 
       {isLoading && (
         <p className="text-[10px] text-white">Loading suggestions...</p>
       )}
+
       {isError && (
         <p className="text-[10px] text-white">Error: {error.message}</p>
+      )}
+
+      {!isLoading && suggestedUsers.length === 0 && (
+        <p className="text-[10px] text-white">
+          😢 No one to follow right now. <br />
+          🕒 New users are coming — just wait!
+        </p>
       )}
 
       {suggestedUsers.map((user) => (
@@ -70,7 +84,13 @@ const RightSideBar = () => {
           username={`@${user.username}`}
           avatar={user.avatar || "/avatar1.svg"}
           isPending={isPending}
-          onFollowClick={() => followMutation(user._id, console.log(user._id))}
+          onFollowClick={() =>
+            followMutation({
+              userId: user._id,
+              username: user.username,
+              followerId: authUser._id,
+            })
+          }
         />
       ))}
     </div>

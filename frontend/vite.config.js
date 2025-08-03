@@ -2,11 +2,16 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [tailwindcss(), react()],
   server: {
     port: 3000,
+    allowedHosts: [
+      "all", // allows all external hosts including Cloudflare Tunnel
+      "localhost",
+      "127.0.0.1",
+      "deals-guardian-der-holland.trycloudflare.com", // <-- Specific url
+    ],
     proxy: {
       "/api": {
         target: "http://localhost:5000",

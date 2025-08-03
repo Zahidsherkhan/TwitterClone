@@ -87,7 +87,7 @@ const Notifications = () => {
   };
 
   return (
-    <div className="flex justify-around w-full items-center">
+    <div className="flex justify-around w-full items-center mt-4">
       <div className="px-4 py-6 w-2/3 border-l border-r border-gray-500 mr-4">
         <div className="mb-8 pb-4">
           {/* Top Header */}
@@ -106,7 +106,7 @@ const Notifications = () => {
               {dropDownMenu && (
                 <div
                   ref={dropDownMenuRef}
-                  className="bg-red-300 rounded w-34 px-2 py-2 absolute text-xs hover:text-red-600 cursor-pointer border shadow-md"
+                  className="bg-red-300 rounded w-40 px-2 py-2 absolute right-0 text-xs hover:text-red-600 cursor-pointer border shadow-md"
                   onClick={handleDeleteAll}
                 >
                   🗑️ Delete all notifications

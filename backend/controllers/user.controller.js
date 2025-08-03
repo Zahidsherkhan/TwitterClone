@@ -3,6 +3,7 @@ import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import { genSalt } from "bcryptjs";
 import { v2 as cloudinary } from "cloudinary";
+import bcrypt from "bcryptjs";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -165,12 +166,25 @@ export const updateUser = async (req, res) => {
     user.bio = bio || user.bio;
     user.link = link || user.link;
 
+    if (username && username !== user.username) {
+      const usernameTaken = await User.findOne({ username });
+      if (usernameTaken) {
+        return res
+          .status(400)
+          .json({ error: "Username already exists. Choose another one." });
+      }
+    }
+
     await user.save();
     user.password = null;
 
     return res.status(200).json(user);
   } catch (error) {
-    console.log("Error in updateUser:", error.message);
-    return res.status(500).json({ error: error.message });
+    if (error.code === 11000 && error.keyPattern?.username) {
+      return res.status(400).json({ error: "Username already exists" });
+    }
+
+    console.error("Error in updateUser:", error);
+    res.status(500).json({ error: "Something went wrong" });
   }
 };

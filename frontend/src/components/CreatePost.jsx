@@ -1,11 +1,14 @@
 import React, { useState, useRef } from "react";
 import { FaImage } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io"; // Cross icon
+import { useAuthUser } from "../Hooks/useAuthUser";
 
 const CreatePost = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [text, setText] = useState("");
   const fileInputRef = useRef(null);
+
+  const authUser = useAuthUser();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -32,7 +35,7 @@ const CreatePost = () => {
       {/* User Info */}
       <div className="flex gap-2 items-center mb-4">
         <img
-          src="avatar1.svg"
+          src={authUser.profileImg || "avatar2.svg"}
           className="w-10 h-10 rounded-full"
           alt="avatar"
         />
@@ -45,7 +48,7 @@ const CreatePost = () => {
           <img
             src={selectedImage}
             alt="Selected"
-            className="w-full rounded-lg"
+            className="w-1/2 max-h-80 object-contain rounded-lg"
           />
           <button
             onClick={removeImage}

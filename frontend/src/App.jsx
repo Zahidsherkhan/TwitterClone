@@ -8,6 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import HomePage from "./pages/home/HomePage";
 import Profile from "./pages/Profile";
 
+import { IoLogoHackernews } from "react-icons/io";
+
 const App = () => {
   const location = useLocation();
   const hideLayoutRoutes = ["/login", "/signup"];
@@ -39,9 +41,12 @@ const App = () => {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex justify-center bg-red-200">
-        <div className="text-6xl text-red-500 text-center flex justify-center items-center">
-          Loading...
+      <div className="h-screen flex justify-center flex-col gap-2 items-center bg-red-200">
+        <div className="animate-bounce text-9xl text-red-500">
+          <IoLogoHackernews />
+        </div>
+        <div className="text-red-500 animate-bubble">
+          Greetings from Zahid ❤️💕
         </div>
       </div>
     );

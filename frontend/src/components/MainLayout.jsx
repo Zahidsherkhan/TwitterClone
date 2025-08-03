@@ -11,7 +11,7 @@ import Profile from "../pages/Profile";
 
 const MainLayout = () => {
   return (
-    <div className="md:flex md:justify-around bg-gradient-to-r from-red-100 via-red-200 to-red-300">
+    <div className="md:flex md:justify-around bg-gradient-to-r from-red-200 via-pink-200 to-pink-400">
       <LeftSideBar />
       <div className="flex-1">
         <Routes>
