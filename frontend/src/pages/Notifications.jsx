@@ -120,7 +120,10 @@ const Notifications = () => {
           {/* Notifications List */}
           <div className="max-h-[80vh] scroll-hidden overflow-y-auto px-4">
             {isLoading ? (
-              <div>⏳ Loading notifications...</div>
+              <div>
+                <p className="animate-spin inline-block">⏳</p> Loading
+                notifications...
+              </div>
             ) : error ? (
               <div>🚨 Error loading notifications!</div>
             ) : notificationsData?.length === 0 ? (

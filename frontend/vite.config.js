@@ -10,7 +10,7 @@ export default defineConfig({
       "all", // allows all external hosts including Cloudflare Tunnel
       "localhost",
       "127.0.0.1",
-      "deals-guardian-der-holland.trycloudflare.com", // <-- Specific url
+      "relation-notebooks-melbourne-ga.trycloudflare.com", // <-- Specific url
     ],
     proxy: {
       "/api": {

@@ -12,7 +12,7 @@ const PostInput = ({ onSubmit, isCreating }) => {
   const fileInputRef = useRef(null);
   const [postText, setPostText] = useState("");
 
-  const { authUser } = useAuthUser();
+  const authUser = useAuthUser();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -71,7 +71,7 @@ const PostInput = ({ onSubmit, isCreating }) => {
   return (
     <div className="flex items-start gap-2 px-4 py-3 mt-8 border-b">
       <img
-        src={authUser?.profileImg || "avatar1.svg"}
+        src={authUser?.profileImg || "avatar2.svg"}
         className="w-10 h-10 rounded-full"
         alt="avatar"
       />

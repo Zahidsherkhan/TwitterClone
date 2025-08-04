@@ -137,13 +137,14 @@ export const likeUnlikePost = async (req, res) => {
 
       await post.save();
 
-      const notification = new Notification({
-        from: userId,
-        to: post.user,
-        type: "like",
-      });
-      await notification.save();
-
+      if (String(userId) !== String(post.user)) {
+        const notification = new Notification({
+          from: userId,
+          to: post.user,
+          type: "like",
+        });
+        await notification.save();
+      }
       return res.status(200).json({ message: "Post liked successfully" });
     }
   } catch (error) {

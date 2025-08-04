@@ -162,7 +162,7 @@ const Profile = () => {
       {/* COVER IMAGE */}
       <div className="relative h-36 bg-gray-200 rounded-b-md overflow-hidden">
         <img
-          src={user.coverImg || "/bg-gray.jpg"}
+          src={coverImg || user.coverImg || "/bg-gray.jpg"}
           alt="Cover"
           className="w-full h-full object-cover"
         />
@@ -188,7 +188,7 @@ const Profile = () => {
       {/* PROFILE IMAGE */}
       <div className="relative w-24 h-24 -mt-12 ml-4 border-4 border-white rounded-full overflow-hidden">
         <img
-          src={user.profileImg || "/avatar1.svg"}
+          src={profileImg || user.profileImg || "/avatar1.svg"}
           alt="Avatar"
           className="w-full h-full object-cover"
         />
@@ -216,26 +216,44 @@ const Profile = () => {
         <h2 className="text-lg font-bold">{user.fullName}</h2>
         <p className="text-gray-500">@{user.username}</p>
         <p className="mt-1">{user.bio || "No bio yet 🐣"}</p>
+        <p className="mt-1">
+          {user.link ? (
+            <>
+              🔗{" "}
+              <a
+                href={user.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+              >
+                {user.link}
+              </a>
+            </>
+          ) : (
+            "No link yet 🐣"
+          )}
+        </p>{" "}
         <div className="mt-2 flex items-center gap-4">
           <span>{user.followers.length} Followers 👥</span>
           <span>{user.following.length} Following 🧭</span>
         </div>
-
         <div className="mt-1 flex items-center text-gray-500 text-sm gap-1">
           <span>📅</span>
           <span>{formatMemberSinceDate(user.createdAt)}</span>
         </div>
-
         {/* Edit or Follow Button */}
         <div className="mt-4">
           {(coverImg || profileImg) && (
-            <button onClick={async () => await updateImage()}>
+            <button
+              className="text-[13px] cursor-pointer hover:bg-red-600 transition-transform active:scale-125 text-white bg-red-500 px-2 py-1 rounded flex mb-2 "
+              onClick={async () => updateImage()}
+            >
               {updateImagePending ? "Updating..." : "Update"}
             </button>
           )}
           {isOwnProfile ? (
             <button
-              className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer hover:bg-red-600 mb-4 text-[12px]"
+              className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer transition-transform active:scale-125 hover:bg-red-600 mb-4 text-[12px]"
               onClick={() => setEditModalOpen(true)}
             >
               Edit Profile
